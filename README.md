@@ -51,15 +51,11 @@ An invalid weight or style is rejected there, not at the first render.
 | `mirrored` | `bool` | `False` | Flips the icon horizontally |
 | `attrs` | `dict` | `None` | Extra attributes passed to the `<svg>` element |
 
-`class` and `style` from `attrs` are combined with the component's own, not
-replaced by them - so passing `c-attrs="{'class': 'me-2'}"` keeps whatever the
-component already sets, and `size` still wins over a conflicting `width`.
+`class` and `style` from `attrs` are combined with the component's own, not replaced by them - so passing `c-attrs="{'class': 'me-2'}"` keeps whatever the component already sets, and `size` still wins over a conflicting `width`.
 
 ## Replacing the component
 
-`Kwargs` is inherited, so a subclass only declares what it changes.
-`get_attrs()` returns what the component sets on the `<svg>` itself,
-`get_default_attrs()` what the caller's `attrs` may override:
+`Kwargs` is inherited, so a subclass only declares what it changes. `get_attrs()` returns what the component sets on the `<svg>` itself, `get_default_attrs()` what the caller's `attrs` may override:
 
 ```python
 from citry import merge_attrs
@@ -74,14 +70,11 @@ class MyIcon(Icon):
 citry_phosphor_icons.install(app, override=MyIcon)
 ```
 
-Yours is published under the same tag, so nothing that renders `<c-icon />`
-has to change.
+Yours is published under the same tag, so nothing that renders `<c-icon />` has to change.
 
 ## Search and metadata
 
-The icons, the loader and search over the icon metadata live in
-[py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons), which this
-package builds on:
+The icons, the loader and search over the icon metadata live in [py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons), which this package builds on:
 
 ```python
 from py_phosphor_icons import get_svg, get_svg_inner, icon_names, search_icons
@@ -91,9 +84,7 @@ search_icons("roledex")  # matches on tags: address-book
 get_svg("house", weight="bold")
 ```
 
-The same search answers a wrong `name`, so `<c-icon name="cart" />` raises
-`Did you mean: shopping-cart, shopping-cart-simple, car?`, narrowed to icons
-that exist in the requested weight and style.
+The same search answers a wrong `name`, so `<c-icon name="cart" />` raises `Did you mean: shopping-cart, shopping-cart-simple, car?`, narrowed to icons that exist in the requested weight and style.
 
 ## Development
 
@@ -104,13 +95,8 @@ uv run ruff check .
 uv run ruff format .
 ```
 
-The icon set and its metadata are maintained in
-[py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons); the sync
-scripts live there.
+The icon set and its metadata are maintained in [py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons); the sync scripts live there.
 
 ## Known icon issues
 
-A few icons are incomplete in the upstream Phosphor release and fail to render
-in certain weight and style combinations. The current list is maintained in
-[py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons#known-icon-issues),
-which is where the icon set is synced.
+A few icons are incomplete in the upstream Phosphor release and fail to render in certain weight and style combinations. The current list is maintained in [py-phosphor-icons](https://github.com/joeyjurjens/py-phosphor-icons#known-icon-issues), which is where the icon set is synced.
