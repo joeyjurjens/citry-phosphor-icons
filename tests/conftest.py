@@ -2,13 +2,12 @@ import pytest
 from citry import Citry
 
 import citry_phosphor_icons
-from citry_phosphor_icons import PhosphorIcons
 
 
 @pytest.fixture(scope="session")
 def app():
-    engine = Citry(autodiscover=False, extensions=[PhosphorIcons])
-    engine.register_library(citry_phosphor_icons)
+    engine = Citry(autodiscover=False)
+    citry_phosphor_icons.install(engine)
     return engine
 
 

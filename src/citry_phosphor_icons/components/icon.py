@@ -1,7 +1,14 @@
 from typing import Any
 
 from citry import LibraryComponent, Markup, merge_attrs
-from py_phosphor_icons import VALID_STYLES, VALID_WEIGHTS, get_svg_inner, validate
+from py_phosphor_icons import (
+    DEFAULT_STYLE,
+    DEFAULT_WEIGHT,
+    VALID_STYLES,
+    VALID_WEIGHTS,
+    get_svg_inner,
+    validate,
+)
 
 from citry_phosphor_icons.preview import SIZE, weight_and_style_variants
 
@@ -28,25 +35,12 @@ class Icon(LibraryComponent):
 
     class Kwargs:
         name: str
-        # The engine's `phosphor` config supplies these; see extension.py.
-        weight: str | None = None
-        style: str | None = None
+        weight: str = DEFAULT_WEIGHT
+        style: str = DEFAULT_STYLE
         size: str | int | None = None
         color: str | None = None
         mirrored: bool = False
         attrs: dict[str, Any] | None = None
-
-    def resolve(self, kwargs: "Icon.Kwargs") -> tuple[str, str]:
-        """The weight and style to render: the caller's, else the engine's.
-
-        A value that came from a template attribute is a sandbox proxy that
-        only impersonates `str`; `pathlib` on Python 3.12+ rejects it. The
-        strings leave the sandbox here, before any plain Python sees them.
-        """
-        return (
-            str(kwargs.weight or self.phosphor.default_weight),
-            str(kwargs.style or self.phosphor.default_style),
-        )
 
     def get_attrs(self, kwargs: "Icon.Kwargs") -> dict[str, Any]:
         """Attributes the component sets itself. Merged over the caller's `attrs`,
@@ -74,7 +68,9 @@ class Icon(LibraryComponent):
         return attrs
 
     def template_data(self, kwargs: "Icon.Kwargs", slots) -> dict:
-        weight, style = self.resolve(kwargs)
+        # A value from a template attribute is a sandbox proxy that only
+        # impersonates `str`; pathlib on 3.12+ rejects it. Leave it here.
+        weight, style = str(kwargs.weight), str(kwargs.style)
         validate(weight, style)
         data = {
             "svg_inner": get_svg_inner(str(kwargs.name), weight, style),

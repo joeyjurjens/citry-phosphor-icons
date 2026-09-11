@@ -10,42 +10,28 @@
 pip install citry-phosphor-icons
 ```
 
-The library configures itself through a citry extension, so install both:
-
 ```python
 import citry_phosphor_icons
 from citry import Citry
-from citry_phosphor_icons import PhosphorIcons
 
-app = Citry(extensions=[PhosphorIcons])
-app.register_library(citry_phosphor_icons)
+app = Citry()
+citry_phosphor_icons.install(app)
 ```
 
-Registration fails with a clear error if the extension is missing, so the two
-cannot drift apart.
-
-## Naming the tag
-
-The component is `<c-icon />`. To publish it under a different tag, install the
-manifest that `library()` builds:
+Everything else is an argument to that one call:
 
 ```python
-app.register_library(citry_phosphor_icons.library("ph-icon"))
+citry_phosphor_icons.install(
+    app,
+    name="ph-icon",  # publish as <c-ph-icon /> instead of <c-icon />
+    weight="bold",  # the default weight, which a caller still overrides
+    style="stroke",
+    cache=False,
+    override=MyIcon,  # publish your own subclass in its place
+)
 ```
 
-That gives `<c-ph-icon />` and nothing else. A manifest owns the names it
-publishes and citry will not retire one, so this replaces the default rather
-than adding to it - install either this package or a named manifest, not both.
-
-To keep `<c-icon />` and answer to a second name as well, alias the installed
-class instead:
-
-```python
-from citry_phosphor_icons import Icon
-
-installed = app.register_library(citry_phosphor_icons)
-app.register(installed.component(Icon), "ph-icon")
-```
+An invalid weight or style is rejected there, not at the first render.
 
 ## Use
 
@@ -57,9 +43,9 @@ app.register(installed.component(Icon), "ph-icon")
 
 | Kwarg | Type | Default | Description |
 |---|---|---|---|
-| `name` | `str` | — | Icon name, e.g. `"house"` |
-| `weight` | `str` | engine default | `bold`, `duotone`, `fill`, `light`, `regular`, `thin` |
-| `style` | `str` | engine default | `flat` or `stroke` |
+| `name` | `str` | - | Icon name, e.g. `"house"` |
+| `weight` | `str` | `regular`, or what `install()` set | `bold`, `duotone`, `fill`, `light`, `regular`, `thin` |
+| `style` | `str` | `flat`, or what `install()` set | `flat` or `stroke` |
 | `size` | `str` or `int` | `None` | Sets width and height; any CSS length (`"1.5rem"`), an `int` is read as px |
 | `color` | `str` | `None` | Sets CSS `color` |
 | `mirrored` | `bool` | `False` | Flips the icon horizontally |
@@ -69,51 +55,14 @@ app.register(installed.component(Icon), "ph-icon")
 replaced by them - so passing `c-attrs="{'class': 'me-2'}"` keeps whatever the
 component already sets, and `size` still wins over a conflicting `width`.
 
-## Settings
-
-Defaults belong to the engine, not the process, so two `Citry` instances can
-differ:
-
-```python
-app = Citry(
-    extensions=[PhosphorIcons],
-    extensions_defaults={"phosphor": {"default_weight": "bold", "default_style": "stroke"}},
-)
-```
-
-A caller's keyword argument beats the engine default, and a component may pin
-its own. Because a library definition cannot carry engine-specific fields, pin
-it on the installed class:
-
-```python
-installed = app.register_library(citry_phosphor_icons)
-
-
-class ThinIcon(installed.component(Icon)):
-    class Phosphor:
-        default_weight = "thin"
-```
-
-Unknown fields and invalid values are rejected when the engine is built, not at
-the first render.
-
-Rendering is cached per unique set of keyword arguments. Citry reads
-`Cache.enabled` as a literal on the component class, so turning it off is a
-property of the manifest rather than an engine setting:
-
-```python
-app.register_library(citry_phosphor_icons.library(cache=False))
-```
-
-## Subclassing
+## Replacing the component
 
 `Kwargs` is inherited, so a subclass only declares what it changes.
 `get_attrs()` returns what the component sets on the `<svg>` itself,
-`get_default_attrs()` what the caller's `attrs` may override. Subclass the
-definition and ship it as your own library:
+`get_default_attrs()` what the caller's `attrs` may override:
 
 ```python
-from citry import ComponentLibrary, merge_attrs
+from citry import merge_attrs
 from citry_phosphor_icons import Icon
 
 
@@ -122,34 +71,11 @@ class MyIcon(Icon):
         return merge_attrs({"class": "icon"}, super().get_attrs(kwargs))
 
 
-__citry_library__ = ComponentLibrary(
-    name="my-icons",
-    components=(MyIcon,),
-    required_extensions=("phosphor",),
-)
+citry_phosphor_icons.install(app, override=MyIcon)
 ```
 
-## Previews
-
-The component ships examples for citry's preview extension: one per weight and
-style, plus the presentation arguments. `preview_app.py` in this repository
-wires an engine for it:
-
-```sh
-uv run citry --app preview_app:app ext run preview serve
-```
-
-Open the printed gallery URL. Variants are plain keyword arguments rather than
-a preview template, so they keep working under a different tag name.
-
-An icon carries no width or height of its own - it takes the size of its
-surroundings, like a letter does. Every variant therefore asks for a `size`,
-and the preview frame is only a little larger.
-
-The gallery documents the component. For the icon set itself, browse the
-[catalogue](https://joeyjurjens.github.io/py-phosphor-icons/preview.html) in
-py-phosphor-icons, which has search, a size slider and a colour picker across
-all 1512 icons in every weight and style.
+Yours is published under the same tag, so nothing that renders `<c-icon />`
+has to change.
 
 ## Search and metadata
 

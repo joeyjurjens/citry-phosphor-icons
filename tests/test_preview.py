@@ -3,7 +3,7 @@ from citry import Citry
 from citry.ext.preview import PreviewExtension
 
 import citry_phosphor_icons
-from citry_phosphor_icons import Icon, PhosphorIcons
+from citry_phosphor_icons import Icon
 from citry_phosphor_icons.preview import SAMPLE
 
 
@@ -31,8 +31,8 @@ def test_slugs_are_unique(variants):
 
 def test_every_variant_renders():
     """Params are the component's own kwargs, so each one has to be valid."""
-    app = Citry(autodiscover=False, extensions=[PhosphorIcons, PreviewExtension])
-    installed = app.register_library(citry_phosphor_icons)
+    app = Citry(autodiscover=False, extensions=[PreviewExtension])
+    installed = citry_phosphor_icons.install(app)
     component = installed.component(Icon)
     for spec in Icon.Preview().variants():
         assert "<svg" in str(component(**dict(spec.params)).render())
@@ -40,6 +40,6 @@ def test_every_variant_renders():
 
 def test_previews_do_not_require_the_extension():
     """A library must install into an engine that has no preview extension."""
-    app = Citry(autodiscover=False, extensions=[PhosphorIcons])
-    app.register_library(citry_phosphor_icons)
+    app = Citry(autodiscover=False)
+    citry_phosphor_icons.install(app)
     assert "<svg" in app.render_template(f'<c-icon name="{SAMPLE}" />').serialize()

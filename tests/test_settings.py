@@ -1,19 +1,15 @@
 import re
 
 import pytest
-from citry import Citry
+from citry import Citry, merge_attrs
 
 import citry_phosphor_icons
-from citry_phosphor_icons import PhosphorIcons
+from citry_phosphor_icons import Icon
 
 
-def engine(**defaults):
-    app = Citry(
-        autodiscover=False,
-        extensions=[PhosphorIcons],
-        extensions_defaults={"phosphor": defaults} if defaults else None,
-    )
-    app.register_library(citry_phosphor_icons)
+def engine(**kwargs):
+    app = Citry(autodiscover=False)
+    citry_phosphor_icons.install(app, **kwargs)
     return app
 
 
@@ -22,15 +18,15 @@ def paths(app, source):
     return re.findall(r'<path[^>]*d="([^"]+)"', app.render_template(source).serialize())
 
 
-def test_the_engine_supplies_the_default_weight():
-    app = engine(default_weight="bold")
+def test_the_library_supplies_a_default_weight():
+    app = engine(weight="bold")
     assert paths(app, '<c-icon name="house" />') == paths(
         app, '<c-icon name="house" weight="bold" />'
     )
 
 
-def test_a_keyword_argument_beats_the_engine_default():
-    app = engine(default_weight="bold")
+def test_a_keyword_argument_beats_the_default():
+    app = engine(weight="bold")
     assert paths(app, '<c-icon name="house" weight="thin" />') != paths(
         app, '<c-icon name="house" />'
     )
@@ -38,48 +34,28 @@ def test_a_keyword_argument_beats_the_engine_default():
 
 def test_each_engine_keeps_its_own_defaults():
     source = '<c-icon name="house" />'
-    assert paths(engine(default_weight="bold"), source) != paths(engine(), source)
-
-
-def test_an_unknown_setting_is_rejected():
-    with pytest.raises(Exception, match="unknown config field"):
-        engine(default_wieght="bold")
+    assert paths(engine(weight="bold"), source) != paths(engine(), source)
 
 
 def test_an_invalid_value_is_rejected():
-    with pytest.raises(Exception, match="default_weight must be one of"):
-        engine(default_weight="chunky")
-
-
-def test_the_library_requires_its_extension():
-    app = Citry(autodiscover=False)
-    with pytest.raises(Exception, match="phosphor"):
-        app.register_library(citry_phosphor_icons)
-
-
-def named(tag):
-    app = Citry(autodiscover=False, extensions=[PhosphorIcons])
-    app.register_library(citry_phosphor_icons.library(tag))
-    return app
-
-
-def test_the_default_tag_is_c_icon():
-    app = Citry(autodiscover=False, extensions=[PhosphorIcons])
-    app.register_library(citry_phosphor_icons)
-    assert "<svg" in app.render_template('<c-icon name="house" />').serialize()
+    with pytest.raises(ValueError, match="weight must be one of"):
+        engine(weight="chunky")
 
 
 def test_the_tag_can_be_chosen():
-    app = named("whateveriwant-icon")
-    assert "<svg" in app.render_template('<c-whateveriwant-icon name="house" />').serialize()
+    assert [n for n in engine(name="ph-icon").components if "icon" in n] == ["ph-icon"]
 
 
-def test_choosing_a_tag_replaces_the_default_rather_than_adding_to_it():
-    app = named("ph-icon")
-    assert [n for n in app.components if "icon" in n] == ["ph-icon"]
+def test_your_own_subclass_can_be_published():
+    class MyIcon(Icon):
+        def get_attrs(self, kwargs):
+            return merge_attrs({"class": "icon"}, super().get_attrs(kwargs))
+
+    app = engine(override=MyIcon)
+    assert 'class="icon"' in app.render_template('<c-icon name="house" />').serialize()
 
 
-def test_the_default_name_returns_the_shipped_manifest():
+def test_the_default_install_reuses_the_shipped_manifest():
     assert citry_phosphor_icons.library() is citry_phosphor_icons.__citry_library__
 
 
@@ -95,10 +71,10 @@ def rendered_twice(lib, monkeypatch):
         return real(*args, **kwargs)
 
     monkeypatch.setattr(module, "get_svg_inner", counting)
-    app = Citry(autodiscover=False, extensions=[PhosphorIcons])
-    cls = app.register_library(lib).component(lib.components[0])
+    app = Citry(autodiscover=False)
+    app.register_library(lib)
     for _ in range(2):
-        app.render_template(f'<c-{cls.name or "icon"} name="house" />')
+        app.render_template('<c-icon name="house" />')
     return len(calls)
 
 
