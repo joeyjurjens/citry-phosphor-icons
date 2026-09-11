@@ -1,6 +1,6 @@
 [project]
 name = "citry-phosphor-icons"
-version = "0.1.0"
+version = "0.2.0"
 description = "Phosphor Icons as citry components"
 readme = "README.md"
 authors = [
